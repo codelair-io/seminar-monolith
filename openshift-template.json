@@ -1,0 +1,221 @@
+{
+  "kind": "Template",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "seminar-microservice"
+  },
+  "parameters": [
+    {
+      "name": "ARTIFACT_NAME",
+      "description": "The base name for all artifacts created",
+      "value": "issfinder",
+      "required": true
+    },
+    {
+      "name": "SOURCE_REPOSITORY_URL",
+      "description": "URL to the Git Repository",
+      "value": "https://github.com/fabricate-tech/seminar-microservice.git",
+      "required": true
+    },
+    {
+      "name": "SOURCE_REPOSITORY_REF",
+      "description": "Git branch/tag-reference to download",
+      "value": "master",
+      "required": true
+    }
+  ],
+  "objects": [
+    {
+      "kind": "BuildConfig",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "${ARTIFACT_NAME}-pipeline"
+      },
+      "spec": {
+        "triggers": [],
+        "runPolicy": "Serial",
+        "source": {
+          "type": "Git",
+          "git": {
+            "uri": "${SOURCE_REPOSITORY_URL}",
+            "ref": "${SOURCE_REPOSITORY_REF}"
+          }
+        },
+        "strategy": {
+          "type": "JenkinsPipeline",
+          "jenkinsPipelineStrategy": {}
+        },
+        "output": {},
+        "resources": {},
+        "postCommit": {},
+        "nodeSelector": {}
+      }
+    },
+    {
+      "kind": "ImageStream",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "${ARTIFACT_NAME}"
+      }
+    },
+    {
+      "kind": "BuildConfig",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "${ARTIFACT_NAME}"
+      },
+      "spec": {
+        "triggers": [],
+        "runPolicy": "Serial",
+        "source": {
+          "type": "Binary",
+          "binary": {}
+        },
+        "strategy": {
+          "type": "Source",
+          "sourceStrategy": {
+            "from": {
+              "kind": "ImageStreamTag",
+              "namespace": "openshift",
+              "name": "redhat-openjdk18-openshift:1.2"
+            }
+          }
+        },
+        "output": {
+          "to": {
+            "kind": "ImageStreamTag",
+            "name": "${ARTIFACT_NAME}:latest"
+          }
+        },
+        "resources": {},
+        "postCommit": {},
+        "nodeSelector": null,
+        "successfulBuildsHistoryLimit": 5,
+        "failedBuildsHistoryLimit": 5
+      }
+    },
+    {
+      "kind": "DeploymentConfig",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "${ARTIFACT_NAME}"
+      },
+      "spec": {
+        "strategy": {
+          "type": "Rolling",
+          "rollingParams": {
+            "updatePeriodSeconds": 1,
+            "intervalSeconds": 1,
+            "timeoutSeconds": 600,
+            "maxUnavailable": "25%",
+            "maxSurge": "25%"
+          },
+          "resources": {},
+          "activeDeadlineSeconds": 21600
+        },
+        "triggers": [
+          {
+            "type": "ImageChange",
+            "imageChangeParams": {
+              "automatic": true,
+              "containerNames": [
+                "${ARTIFACT_NAME}"
+              ],
+              "from": {
+                "kind": "ImageStreamTag",
+                "name": "${ARTIFACT_NAME}:latest"
+              }
+            }
+          },
+          {
+            "type": "ConfigChange"
+          }
+        ],
+        "replicas": 1,
+        "test": false,
+        "selector": {
+          "name": "${ARTIFACT_NAME}"
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "name": "${ARTIFACT_NAME}"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "${ARTIFACT_NAME}",
+                "image": "",
+                "ports": [
+                  {
+                    "containerPort": 8080,
+                    "protocol": "TCP"
+                  }
+                ],
+                "env": [
+                  {
+                    "name": "AB_PROMETHEUS_OFF",
+                    "value": "true"
+                  },
+                  {
+                    "name": "AB_JOLOKIA_OFF",
+                    "value": "true"
+                  }
+                ],
+                "resources": {},
+                "terminationMessagePath": "/dev/termination-log",
+                "terminationMessagePolicy": "File",
+                "imagePullPolicy": "Always"
+              }
+            ],
+            "restartPolicy": "Always",
+            "terminationGracePeriodSeconds": 30,
+            "dnsPolicy": "ClusterFirst",
+            "securityContext": {},
+            "schedulerName": "default-scheduler"
+          }
+        }
+      }
+    },
+    {
+      "kind": "Service",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "${ARTIFACT_NAME}"
+      },
+      "spec": {
+        "ports": [
+          {
+            "name": "http",
+            "protocol": "TCP",
+            "port": 8080,
+            "targetPort": 8080
+          }
+        ],
+        "selector": {
+          "name": "${ARTIFACT_NAME}"
+        },
+        "type": "ClusterIP",
+        "sessionAffinity": "None"
+      }
+    },
+    {
+      "kind": "Route",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "${ARTIFACT_NAME}"
+      },
+      "spec": {
+        "to": {
+          "kind": "Service",
+          "name": "${ARTIFACT_NAME}"
+        },
+        "tls": {
+          "termination": "edge",
+          "insecureEdgeTerminationPolicy": "Redirect"
+        }
+      }
+    }
+  ]
+}
