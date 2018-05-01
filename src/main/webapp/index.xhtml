@@ -1,19 +1,50 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:h="http://xmlns.jcp.org/jsf/html"
-      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns:h="http://xmlns.jcp.org/jsf/html"
       xmlns:f="http://xmlns.jcp.org/jsf/core">
 <head>
-
+  <title>ISSFinder</title>
 </head>
-<body>
-<h1>ISS Finder</h1>
+<body style="font-family: sans-serif; background-image: url(iss.jpg); background-size: cover;">
 <h:form>
-<h:inputText
+  <div style="font-size: 26px; background-color: white; border-radius: 15px; padding: 15px; width: 600px; margin-bottom: 20px;">
+    ISS Finder
+  </div>
+
+  <div style="background-color: white; border-radius: 15px; padding: 15px; width: 600px; margin-bottom: 20px;">
+    Using your coordinates this monolithic app will tell you when you'll be able to see the international space station in the
+    sky. As you will only be able to see it when it's dark enough, only the flyby's during night-time will be shown.
+  </div>
+
+  <div style="background-color: white; border-radius: 15px; padding: 15px; width: 600px; margin-bottom: 20px;">
+    Latitude: <h:inputText value="#{controller.latitude}"/> / Longitude: <h:inputText value="#{controller.longitude}"/><br/><br/>
+    <h:commandButton value="Search" actionListener="#{controller.search}">
+      <f:ajax render="@form"/>
+    </h:commandButton>
+  </div>
+
+
+  <div style="background-color: white; border-radius: 15px; padding: 15px; width: 600px;">
+    <h2>#{controller.result}</h2>
+
+    <p/>
+
+    <h3>Recent lookups of the curious</h3>
+    <h:dataTable value="#{controller.history}" var="hist">
+      <h:column>
+        <!-- column header -->
+        <f:facet name="header">Latitude / Longitude</f:facet>
+        #{hist.lat}&#176;, #{hist.lon}&#176;
+      </h:column>
+
+      <h:column>
+        <f:facet name="header">When</f:facet>
+        <h:outputText value="#{hist.date}">
+          <f:convertDateTime pattern="yyyy-MM-dd HH:mm"/>
+        </h:outputText>
+      </h:column>
+    </h:dataTable>
+  </div>
 </h:form>
-
-
 </body>
 </html>

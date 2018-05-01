@@ -1,0 +1,8 @@
+swarm:
+  logging: WARN
+  ds:
+    name: IssfinderDS
+    username: ${env.username}
+    password: ${env.password}
+    connection:
+      url: jdbc:${env.uri}/${env.database_name}
