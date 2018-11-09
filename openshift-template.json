@@ -14,7 +14,7 @@
     {
       "name": "SOURCE_REPOSITORY_URL",
       "description": "URL to the Git Repository",
-      "value": "https://github.com/fabricate-tech/seminar-monolith.git",
+      "value": "https://github.com/codelair-io/seminar-monolith.git",
       "required": true
     },
     {
